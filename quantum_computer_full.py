@@ -11,21 +11,20 @@ class HardwareInterface:
     @staticmethod
     def calibrate(qubit: int):
         print(f"[Hardware] Calibrating qubit {qubit}")
-        time.sleep(0.02)
+        time.sleep(0.01)
 
     @staticmethod
     def send_pulse(qubit: int, gate: str):
         print(f"[Hardware] Applying {gate} to qubit {qubit}")
-        time.sleep(0.01)
+        time.sleep(0.005)
 
     @staticmethod
     def send_two_qubit_pulse(q1: int, q2: int, gate: str):
         print(f"[Hardware] Applying {gate} to qubits {q1},{q2}")
-        time.sleep(0.02)
+        time.sleep(0.01)
 
     @staticmethod
     def read_state(qubit: int) -> int:
-        # Replace with real hardware readout
         return random.choice([0, 1])
 
 # --------------------------
@@ -35,7 +34,7 @@ class QuantumComputer:
     def __init__(self, num_qubits: int = 100):
         self.num_qubits = num_qubits
         self.calibrated: List[bool] = [False]*num_qubits
-        self.log_file = "qc_lab_surface_log.json"
+        self.log_file = "qc_lab_100qubits.json"
 
     def _log(self, entry: Dict):
         with open(self.log_file, "a") as f:
@@ -48,7 +47,7 @@ class QuantumComputer:
 
     # Parallel single-qubit gates
     def apply_gate_parallel(self, gate: str, qubits: List[int]):
-        def task(q): 
+        def task(q):
             if self.calibrated[q]:
                 HardwareInterface.send_pulse(q, gate)
                 self._log({"action":"gate","gate":gate,"qubits":[q],"time":time.time()})
@@ -70,13 +69,11 @@ class QuantumComputer:
         self._log({"action":"measure_physical","qubits":qubits,"shots":shots,"results":results,"time":time.time()})
         return results
 
-    # Logical qubit measurement using distance-3 repetition code (example)
+    # Logical qubit measurement using repetition code (distance 3 example)
     def measure_logical(self, qubit_group: List[int], shots: int = 1) -> Dict[str,int]:
         results = {"0":0,"1":0}
         for _ in range(shots):
-            votes = []
-            for q in qubit_group:
-                votes.append(HardwareInterface.read_state(q))
+            votes = [HardwareInterface.read_state(q) for q in qubit_group]
             corrected = max(set(votes), key=votes.count)
             results[str(corrected)] += 1
         self._log({"action":"measure_logical","qubits":qubit_group,"shots":shots,"results":results,"time":time.time()})
@@ -106,11 +103,11 @@ if __name__ == "__main__":
     qc = QuantumComputer()
     circuit = QuantumCircuit(qc)
 
-    # Calibrate qubits
-    for i in range(9):
+    # Calibrate all 100 qubits
+    for i in range(100):
         qc.calibrate_qubit(i)
 
-    # Define logical qubits using groups of 3 physical qubits
+    # Example logical qubits (first 3 qubits each)
     logical0 = [0,1,2]
     logical1 = [3,4,5]
 
@@ -118,8 +115,9 @@ if __name__ == "__main__":
     circuit.h(logical0[0])
     circuit.cnot(logical0[0],logical1[0])
 
-    # Logical qubit measurement
+    # Measure logical qubits
     results0 = qc.measure_logical(logical0, shots=10)
     results1 = qc.measure_logical(logical1, shots=10)
+
     print("Logical Qubit 0 Results:", results0)
     print("Logical Qubit 1 Results:", results1)
