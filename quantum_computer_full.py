@@ -118,6 +118,17 @@ if __name__ == "__main__":
     # Measure logical qubits
     results0 = qc.measure_logical(logical0, shots=10)
     results1 = qc.measure_logical(logical1, shots=10)
+    results = qc.measure_physical([0,1,2], shots=20)
+    # Apply Hadamard to qubits 0–9
+    qc.apply_gate_parallel("H", list(range(10)))
 
+    # Apply CNOT between qubit 0 and qubit 1
+    qc.apply_two_qubit_gate("CNOT", 0, 1)
+
+    logical_qubit = [0,1,2]
+    logical_results = qc.measure_logical(logical_qubit, shots=10)
+
+
+    print("Logical qubit results:", logical_results)
     print("Logical Qubit 0 Results:", results0)
     print("Logical Qubit 1 Results:", results1)
