@@ -20,21 +20,21 @@ std::mutex log_mutex;
 namespace HardwareInterface {
     void calibrate(int q) {
         std::cout << "[Hardware] Calibrating qubit " << q << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     void sendPulse(int q, const std::string &gate) {
         std::cout << "[Hardware] Applying " << gate << " to qubit " << q << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
     void sendTwoQubitPulse(int q1, int q2, const std::string &gate) {
         std::cout << "[Hardware] Applying " << gate << " to qubits " << q1 << "," << q2 << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     int readState(int q) {
-        return rand() % 2; // replace with real hardware readout
+        return rand() % 2; // Replace with real hardware readout
     }
 }
 
@@ -45,12 +45,12 @@ class QuantumComputer {
 private:
     int num_qubits;
     std::vector<bool> calibrated;
-    std::string log_file = "qc_lab_surface_cpp.json";
+    std::string log_file = "qc_lab_100qubits_cpp.json";
 
     void log(const json &entry) {
         std::lock_guard<std::mutex> guard(log_mutex);
         std::ofstream f(log_file, std::ios::app);
-        if (f.is_open()) { f << entry.dump() << "\n"; f.close(); }
+        if(f.is_open()) { f << entry.dump() << "\n"; f.close(); }
     }
 
 public:
@@ -67,19 +67,19 @@ public:
     // Parallel single-qubit gate
     void applyGateParallel(const std::string &gate, const std::vector<int> &qubits) {
         std::vector<std::thread> threads;
-        for (int q : qubits) {
+        for(int q : qubits) {
             threads.emplace_back([this, gate, q]() {
-                if (calibrated[q]) {
+                if(calibrated[q]) {
                     HardwareInterface::sendPulse(q, gate);
                     log({{"action","gate"},{"gate",gate},{"qubits",{q}}});
                 }
             });
         }
-        for (auto &t : threads) t.join();
+        for(auto &t: threads) t.join();
     }
 
     void applyTwoQubitGate(const std::string &gate, int q1, int q2) {
-        if (calibrated[q1] && calibrated[q2]) {
+        if(calibrated[q1] && calibrated[q2]) {
             HardwareInterface::sendTwoQubitPulse(q1,q2,gate);
             log({{"action","two_qubit_gate"},{"gate",gate},{"qubits",{q1,q2}}});
         }
@@ -99,7 +99,7 @@ public:
         return results;
     }
 
-    // Logical qubit using distance-3 repetition code
+    // Logical qubit (distance-3 repetition code)
     std::map<std::string,int> measureLogical(const std::vector<int> &qubit_group, int shots=1) {
         std::map<std::string,int> results = {{"0",0},{"1",0}};
         for(int s=0;s<shots;s++){
@@ -142,14 +142,14 @@ int main() {
     QuantumComputer qc;
     QuantumCircuit circuit(qc);
 
-    // Calibrate first 9 physical qubits
-    for(int i=0;i<9;i++) qc.calibrateQubit(i);
+    // Calibrate all 100 qubits
+    for(int i=0;i<100;i++) qc.calibrateQubit(i);
 
-    // Define logical qubits using 3 physical qubits each
+    // Logical qubits (first 3 qubits each)
     std::vector<int> logical0 = {0,1,2};
     std::vector<int> logical1 = {3,4,5};
 
-    // Create Bell state on logical qubits
+    // Bell state on logical qubits
     circuit.h(logical0[0]);
     circuit.cnot(logical0[0],logical1[0]);
 
