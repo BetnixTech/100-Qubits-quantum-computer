@@ -153,9 +153,26 @@ int main() {
     circuit.h(logical0[0]);
     circuit.cnot(logical0[0],logical1[0]);
 
+    // Apply H gate to first 10 qubits
+    qc.applyGateParallel("H", {0,1,2,3,4,5,6,7,8,9});
+
+    // Apply CNOT between qubit 0 and 1
+    qc.applyTwoQubitGate("CNOT", 0, 1);
+
+
     // Measure logical qubits
     auto results0 = qc.measureLogical(logical0,10);
     auto results1 = qc.measureLogical(logical1,10);
+    auto results = qc.measurePhysical({0,1,2}, 20);
+    for(auto &[q, val]: results){
+        std::cout << "Qubit " << q << " -> 0:" << val["0"] << " 1:" << val["1"] << std::endl;
+    }
+
+    std::vector<int> logical = {0,1,2};
+    auto logical_results = qc.measureLogical(logical, 10);
+    std::cout << "Logical qubit 0 -> 0:" << logical_results["0"] 
+              << " 1:" << logical_results["1"] << std::endl;
+
 
     std::cout << "Logical Qubit 0 Results: 0=" << results0["0"] << " 1=" << results0["1"] << std::endl;
     std::cout << "Logical Qubit 1 Results: 0=" << results1["0"] << " 1=" << results1["1"] << std::endl;
